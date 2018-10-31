@@ -43,3 +43,7 @@ function processBuffer(waitTime) {
     }
 }
 
+tmpMessage = {};
+tmpMessage.uuid = 1;
+tmpMessage.info = "stuff";
+newMsg(tmpMessage);

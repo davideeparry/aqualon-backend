@@ -20,6 +20,7 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
         var msg = JSON.parse(message);
         if (msg.hasOwnProperty('uuid')) {
+            message = message + "\n";
             port.write(message, function(err) {
                 if (err) {
                     console.log("Error writing to serial: ", err.message);
@@ -31,7 +32,9 @@ wss.on('connection', function connection(ws) {
         }
     });
     parser.on('data', function (msgFromBoat) {
-        ws.send(messageFromBoat);
+        console.log("FROMBOAT: ");console.log(msgFromBoat);
+        ws.send(msgFromBoat);
+        // this will fire when a newline is detected, we can change the delimiter if we want
     });
 });
 
