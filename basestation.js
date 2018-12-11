@@ -3,14 +3,17 @@ const parseJson = require('parse-json');
 var SerialPort = require('serialport');
 var Readline = require('@serialport/parser-readline'); // nice little parser that uses a newline delimiter
 var parser = new Readline();
-var port = new SerialPort('COM3', function(err) {
+
+var port = new SerialPort('COM6', function(err) {
     if (err) {
         console.log('Error opening serial port: ', err.message);
         // will need callback wrappers for reconnecting
     }
 });
 
+
 port.pipe(parser);
+
 
 const wss = new WebSocket.Server({
     port: 8080
@@ -24,6 +27,8 @@ wss.on('connection', function connection(ws) {
             port.write(message, function(err) {
                 if (err) {
                     console.log("Error writing to serial: ", err.message);
+                } else {
+                    console.log("Msg sent");
                 }
             });
         } else {
