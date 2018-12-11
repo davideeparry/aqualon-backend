@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:8081');
-const wsf = new WebSocket('ws://localhost:8080');
 var uuid = 0;
 var messageBuffer = require('./messageBuffer.js');
 var createCsvWriter = require('csv-writer').createObjectCsvWriter;
@@ -21,8 +20,14 @@ const csvWriter = createCsvWriter({
     ]
 });
 
-wsf.on('message', function incoming(data) {
-    wsf.send("yoyo: " + data):
+const wss = new WebSocket.Server({
+    port: 8080
+});
+
+wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(message) {
+      ws.send("yoyo: " + message);  
+    })
 });
 
 ws.on('open', function open() {
