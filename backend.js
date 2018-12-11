@@ -15,16 +15,21 @@ var rl = readline.createInterface({
 const csvWriter = createCsvWriter({
     path: './file.csv',
     header: [
-        {id: 'data', title: 'MSG'},
-        {id: 'uuid', title: 'UUID'}
-    ]
+        {id: 'time', title: 'TIME'},
+        {id: 'lat', title: 'LAT'},
+        {id: 'lon', title: 'LON'},
+        {id: 'data', title: 'DATA'},
+    ],
+    append: true
 });
 
 const wss = new WebSocket.Server({
     port: 8080
 });
+var wsExternal;
 
 wss.on('connection', function connection(ws) {
+    wsExternal = ws;
     ws.on('message', function incoming(message) {
         
         var obj = JSON.parse(message);
@@ -49,15 +54,18 @@ wss.on('connection', function connection(ws) {
                 //newMsg(msg1);               
             } 
         } else if (obj.type == "newData") {
-            csv().fromFile("./serverData.csv")
+            csv().fromFile("./file.csv")
             .then((jsonObj) => {
                 ws.send(JSON.stringify(jsonObj));
             });
         } else if (obj.type == "updateData") {
-            csv().fromFile("./serverData.csv")
-            .then((jsonObj) => {
-                ws.send(JSON.stringify(jsonObj));
-            });
+            console.log("hit");
+            var msg2 = {};
+            msg2.uuid = uuid;
+            uuid = uuid + 1;
+            msg2.type = "get";
+            msg2.data = "data";
+            newMsg(msg2);
         }
     });
 });
@@ -181,7 +189,10 @@ var chunkingMsg = false;
 ws.on('message', function incoming(data) {
     var msg = JSON.parse(data);
     if (msg.hasOwnProperty('uuid')) {
-        confirmationMessageHandler(msg.uuid);
+        if (msg.type == "success") {
+            confirmationMessageHandler(msg.uuid);
+        }
+        
         // TEMP
         if (msg.type == "chunk") {
             chunkingMsg = true;
@@ -189,14 +200,41 @@ ws.on('message', function incoming(data) {
         }
         if (chunkingMsg == true && msg.type == "success") {
             chunkingMsg = false;
-            var record = [
+           /* var record = [
                 {data: currentChunkedMsg, uuid:msg.uuid},
             ]
-            csvWriter.writeRecords(record).then(() => { currentChunkedMsg = "";});
+            csvWriter.writeRecords(record).then(() => { currentChunkedMsg = "";});*/
+            //console.log(currentChunkedMsg);
+            var dataList = currentChunkedMsg.split("\r\n");
+            var dataArray = [];
+            var i = 0;
+            dataList.forEach(function (item) {
+                if (item.length != 0) {
+                    var objData = JSON.parse(item);
+                    if (objData.time && objData.lat && objData.lon && objData.data) {
+                        
+                        dataArray[i] = objData;
+                        console.log(objData);
+                        i++;
+                    }
+                }
+                
+             
+                    
+                
+            });
+            console.log(dataArray);
+            csvWriter.writeRecords(dataArray).then(function() {
+                csv().fromFile("./file.csv")
+                .then((jsonObj) => {
+                    wsExternal.send(JSON.stringify(jsonObj));
+                });
+            })
+            currentChunkedMsg = "";
         }
         // TEMP
     }
-    console.log(data);
+    
 });
 
 function confirmationMessageHandler(uuid) {
