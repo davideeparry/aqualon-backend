@@ -26,8 +26,40 @@ const wss = new WebSocket.Server({
 
 wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
-      ws.send("yoyo: " + message);  
-    })
+        
+        var obj = JSON.parse(message);
+
+        if (obj.type == "cordset") {
+            var msg = {};
+            msg.uuid = uuid;
+            uuid = uuid + 1;
+            msg.type = "clear";
+            newMsg(msg);
+            for (var i = 0; i < obj.num; i++) {
+                var currentCord = obj.cords[i];
+                var msg1 = {};
+                msg1.uuid = uuid;
+                uuid = uuid + 1;
+                msg1.type = "cordset";
+                msg1.lon = currentCord["lon"];
+                msg1.lat = currentCord["lat"];
+                if (msg1.lon != '' && msg1.lat != '') {
+                    console.log(msg1);
+                }
+                //newMsg(msg1);               
+            } 
+        } else if (obj.type == "newData") {
+            csv().fromFile("./serverData.csv")
+            .then((jsonObj) => {
+                ws.send(JSON.stringify(jsonObj));
+            });
+        } else if (obj.type == "updateData") {
+            csv().fromFile("./serverData.csv")
+            .then((jsonObj) => {
+                ws.send(JSON.stringify(jsonObj));
+            });
+        }
+    });
 });
 
 ws.on('open', function open() {
@@ -41,12 +73,12 @@ rl.on('line', (input) => {
         console.log("This conversation can serve no purpose anymore. Good-bye.");
         process.exit();
     } else if (cmdList[0].toLowerCase() == "start") {
-        if (cmdList[1].toLowerCase() != "-c") {
+        if (!cmdList[1]) {
             var msg2 = {};
             msg2.uuid = uuid;
             uuid = uuid + 1;
             msg2.type = "start";
-            newMsg(msg);
+            newMsg(msg2);        
         } else if (cmdList[1].toLowerCase() == "-c") {
             csv().fromFile(cmdList[2])
             .then((jsonObj) => {
@@ -183,10 +215,10 @@ function processBuffer(waitTime) {
         var msg = messageBuffer.getCurrentMsg();
         if (ws.readyState == ws.OPEN) {
             ws.send(JSON.stringify(msg));
-            setTimeout(processBuffer,waitTime+2000,waitTime+2000);
+            setTimeout(processBuffer,1000,1000);
         } else {
             console.log("Attemped to send while socket was closed");
-            setTimeout(processBuffer,waitTime+2000,waitTime+2000);
+            setTimeout(processBuffer,1000,1000);
             // need more behavior here
         }
     } else {
