@@ -29,6 +29,7 @@ const wss = new WebSocket.Server({
 var wsExternal;
 
 wss.on('connection', function connection(ws) {
+    console.log("yo");
     wsExternal = ws;
     ws.on('message', function incoming(message) {
         
@@ -51,7 +52,7 @@ wss.on('connection', function connection(ws) {
                 if (msg1.lon != '' && msg1.lat != '') {
                     console.log(msg1);
                 }
-                //newMsg(msg1);               
+                newMsg(msg1);               
             } 
         } else if (obj.type == "newData") {
             csv().fromFile("./file.csv")
@@ -66,6 +67,18 @@ wss.on('connection', function connection(ws) {
             msg2.type = "get";
             msg2.data = "data";
             newMsg(msg2);
+        } else if (obj.type == "stop") {
+            var msg2 = {};
+            msg2.uuid = uuid;
+            uuid = uuid + 1;
+            msg2.type = "stop";
+            newMsg(msg2);
+        } else if (obj.type == "start") {
+            var msg2 = {};
+            msg2.uuid = uuid;
+            uuid = uuid + 1;
+            msg2.type = "start";
+            newMsg(msg2);  
         }
     });
 });
@@ -80,6 +93,12 @@ rl.on('line', (input) => {
     if (cmdList[0].toLowerCase() == "exit") {
         console.log("This conversation can serve no purpose anymore. Good-bye.");
         process.exit();
+    } else if (cmdList[0].toLowerCase() == "delete") {
+        var msg2 = {};
+        msg2.uuid = uuid;
+        uuid = uuid + 1;
+        msg2.type = "delete";
+        newMsg(msg2); 
     } else if (cmdList[0].toLowerCase() == "start") {
         if (!cmdList[1]) {
             var msg2 = {};
