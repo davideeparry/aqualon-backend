@@ -2,8 +2,6 @@ const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:8081');
 var uuid = 0;
 var messageBuffer = require('./messageBuffer.js');
-var createCsvWriter = require('csv-writer').createObjectCsvWriter;
-var csv = require('csvtojson');
 var readline = require('readline');
 var rl = readline.createInterface({
         input: process.stdin,
@@ -12,73 +10,26 @@ var rl = readline.createInterface({
         prompt: ">",
 });
 
-const csvWriter = createCsvWriter({
-    path: './file.csv',
-    header: [
-        {id: 'time', title: 'TIME'},
-        {id: 'lat', title: 'LAT'},
-        {id: 'lon', title: 'LON'},
-        {id: 'data', title: 'DATA'},
-    ],
-    append: true
-});
+const currentChunkedMsg = "";
+const chunkingMsg = false;
 
 const wss = new WebSocket.Server({
     port: 8080
 });
-var wsExternal;
 
 wss.on('connection', function connection(ws) {
-    console.log("yo");
-    wsExternal = ws;
+    console.log('Web API started...');
+
     ws.on('message', function incoming(message) {
         
-        var obj = JSON.parse(message);
+        const obj = JSON.parse(message);
 
-        if (obj.type == "cordset") {
+        if (obj.type == "example") {
             var msg = {};
             msg.uuid = uuid;
             uuid = uuid + 1;
-            msg.type = "clear";
-            newMsg(msg);
-            for (var i = 0; i < obj.num; i++) {
-                var currentCord = obj.cords[i];
-                var msg1 = {};
-                msg1.uuid = uuid;
-                uuid = uuid + 1;
-                msg1.type = "cordset";
-                msg1.lon = currentCord["lon"];
-                msg1.lat = currentCord["lat"];
-                if (msg1.lon != '' && msg1.lat != '') {
-                    console.log(msg1);
-                }
-                newMsg(msg1);               
-            } 
-        } else if (obj.type == "newData") {
-            csv().fromFile("./file.csv")
-            .then((jsonObj) => {
-                ws.send(JSON.stringify(jsonObj));
-            });
-        } else if (obj.type == "updateData") {
-            console.log("hit");
-            var msg2 = {};
-            msg2.uuid = uuid;
-            uuid = uuid + 1;
-            msg2.type = "get";
-            msg2.data = "data";
-            newMsg(msg2);
-        } else if (obj.type == "stop") {
-            var msg2 = {};
-            msg2.uuid = uuid;
-            uuid = uuid + 1;
-            msg2.type = "stop";
-            newMsg(msg2);
-        } else if (obj.type == "start") {
-            var msg2 = {};
-            msg2.uuid = uuid;
-            uuid = uuid + 1;
-            msg2.type = "start";
-            newMsg(msg2);  
+            msg.type = "example";
+            newMsg(msg);  
         }
     });
 });
@@ -87,11 +38,11 @@ ws.on('open', function open() {
     // Might need to add some auto-reconnecting code here if the connection breaks.
 });
 
-var re = /[ \t]+/;
+const re = /[ \t]+/;
 rl.on('line', (input) => {
+    // commands are just examples from project this code was made for
     var cmdList = input.split(re);
     if (cmdList[0].toLowerCase() == "exit") {
-        console.log("This conversation can serve no purpose anymore. Good-bye.");
         process.exit();
     } else if (cmdList[0].toLowerCase() == "delete") {
         var msg2 = {};
@@ -191,20 +142,6 @@ rl.on('line', (input) => {
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-var currentChunkedMsg = "";
-var chunkingMsg = false;
 ws.on('message', function incoming(data) {
     var msg = JSON.parse(data);
     if (msg.hasOwnProperty('uuid')) {
@@ -212,46 +149,17 @@ ws.on('message', function incoming(data) {
             confirmationMessageHandler(msg.uuid);
         }
         
-        // TEMP
+        // TEMP code for handling multi-part data messages
         if (msg.type == "chunk") {
             chunkingMsg = true;
             currentChunkedMsg = currentChunkedMsg + msg.msg;
         }
         if (chunkingMsg == true && msg.type == "success") {
             chunkingMsg = false;
-           /* var record = [
-                {data: currentChunkedMsg, uuid:msg.uuid},
-            ]
-            csvWriter.writeRecords(record).then(() => { currentChunkedMsg = "";});*/
-            //console.log(currentChunkedMsg);
-            var dataList = currentChunkedMsg.split("\r\n");
-            var dataArray = [];
-            var i = 0;
-            dataList.forEach(function (item) {
-                if (item.length != 0) {
-                    var objData = JSON.parse(item);
-                    if (objData.time && objData.lat && objData.lon && objData.data) {
-                        
-                        dataArray[i] = objData;
-                        console.log(objData);
-                        i++;
-                    }
-                }
-                
-             
-                    
-                
-            });
-            console.log(dataArray);
-            csvWriter.writeRecords(dataArray).then(function() {
-                csv().fromFile("./file.csv")
-                .then((jsonObj) => {
-                    wsExternal.send(JSON.stringify(jsonObj));
-                });
-            })
+            console.log(currentChunkedMsg); // just to show the basic process working
             currentChunkedMsg = "";
         }
-        // TEMP
+        // End of TEMP
     }
     
 });

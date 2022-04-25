@@ -1,5 +1,4 @@
 const WebSocket = require('ws');
-const parseJson = require('parse-json');
 var SerialPort = require('serialport');
 var Readline = require('@serialport/parser-readline'); // nice little parser that uses a newline delimiter
 var parser = new Readline();
@@ -11,9 +10,7 @@ var port = new SerialPort('COM6', function(err) {
     }
 });
 
-
 port.pipe(parser);
-
 
 const wss = new WebSocket.Server({
     port: 8081
@@ -37,7 +34,8 @@ wss.on('connection', function connection(ws) {
         }
     });
     parser.on('data', function (msgFromBoat) {
-        console.log("FROMBOAT: ");console.log(msgFromBoat);
+        console.log("FROMBOAT: ");
+        console.log(msgFromBoat);
         ws.send(msgFromBoat);
         // this will fire when a newline is detected, we can change the delimiter if we want
     });
