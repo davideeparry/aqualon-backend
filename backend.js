@@ -50,65 +50,6 @@ rl.on('line', (input) => {
         uuid = uuid + 1;
         msg2.type = "delete";
         newMsg(msg2); 
-    } else if (cmdList[0].toLowerCase() == "start") {
-        if (!cmdList[1]) {
-            var msg2 = {};
-            msg2.uuid = uuid;
-            uuid = uuid + 1;
-            msg2.type = "start";
-            newMsg(msg2);        
-        } else if (cmdList[1].toLowerCase() == "-c") {
-            csv().fromFile(cmdList[2])
-            .then((jsonObj) => {
-                if (jsonObj.length > 120) {
-                    console.log("Input co-ordinate set too large, maximum number of co-ordinates is 120");
-                } else {
-                    var msg = {};
-                    msg.uuid = uuid;
-                    uuid = uuid + 1;
-                    msg.type = "clear";
-                    newMsg(msg);
-                    for (var i = 0; i < jsonObj.length; i++) {
-                        var currentCord = jsonObj[i];
-                        var msg1 = {};
-                        msg1.uuid = uuid;
-                        uuid = uuid + 1;
-                        msg1.type = "cordset";
-                        msg1.lon = currentCord["lon"];
-                        msg1.lat = currentCord["lat"];
-                        newMsg(msg1);
-                    }              
-                    var msg2 = {};
-                    msg2.uuid = uuid;
-                    uuid = uuid + 1;
-                    msg2.type = "start";
-                    newMsg(msg2);
-                }
-            });
-        }
-    } else if (cmdList[0].toLowerCase() == "load") {
-        csv().fromFile(cmdList[1])
-        .then((jsonObj) => {
-            if (jsonObj.length > 120) {
-                console.log("Input co-ordinate set too large, maximum number of co-ordinates is 120");
-            } else {
-                var msg = {};
-                msg.uuid = uuid;
-                uuid = uuid + 1;
-                msg.type = "clear";
-                newMsg(msg);
-                for (var i = 0; i < jsonObj.length; i++) {
-                    var currentCord = jsonObj[i];
-                    var msg1 = {};
-                    msg1.uuid = uuid;
-                    uuid = uuid + 1;
-                    msg1.type = "cordset";
-                    msg1.lon = currentCord["lon"];
-                    msg1.lat = currentCord["lat"];
-                    newMsg(msg1);
-                }      
-            }
-        });
     } else if (cmdList[0].toLowerCase() == "stop") {
         var msg2 = {};
         msg2.uuid = uuid;
@@ -140,7 +81,6 @@ rl.on('line', (input) => {
         }
     }
 });
-
 
 ws.on('message', function incoming(data) {
     var msg = JSON.parse(data);
