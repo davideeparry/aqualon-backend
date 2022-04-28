@@ -9,6 +9,8 @@
   "author": "David Parry",
   "license": "ISC",
   "dependencies": {
+    "csv-writer": "^1.2.0",
+    "csvtojson": "^2.0.8",
     "parse-json": "^4.0.0",
     "serialport": "^7.0.2",
     "ws": "^6.1.0"
